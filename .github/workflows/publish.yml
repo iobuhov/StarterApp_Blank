@@ -1,0 +1,34 @@
+name: Publish release
+
+on:
+    workflow_dispatch:
+        inputs:
+            release_tag:
+                description: "Release tag to publish"
+                required: true
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+            - name: Publish
+              working-directory: scripts
+              run: |
+                  npm ci
+                  npm install
+                  echo "Publishing release ${{ github.event.inputs.release_tag }}"
+                  npm run publish-release ${{ github.event.inputs.release_tag }}
+
+    retry-on-failure:
+        if: failure() && fromJSON(github.run_attempt) < 3
+        needs: [publish]
+        runs-on: ubuntu-latest
+        steps:
+            - env:
+                  GH_REPO: ${{ github.repository }}
+                  GH_TOKEN: ${{ github.token }}
+              run: gh workflow run retry-publish.yml -F run_id=${{ github.run_id }}
