@@ -1,6 +1,9 @@
 name: Publish release
+run-name: Publish release ${{ inputs.release_tag }}
 
 on:
+    repository_dispatch:
+        types: [publish_release]
     workflow_dispatch:
         inputs:
             release_tag:
