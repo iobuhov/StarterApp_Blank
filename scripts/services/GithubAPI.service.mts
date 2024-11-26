@@ -59,5 +59,11 @@ interface GHRelease {
     prerelease: boolean;
     published_at: string;
     html_url: string;
-    assets: unknown[];
+    assets: GHAsset[];
+}
+
+interface GHAsset {
+    id: number;
+    name: "string";
+    browser_download_url: string;
 }

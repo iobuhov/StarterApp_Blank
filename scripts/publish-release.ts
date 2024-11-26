@@ -1,18 +1,27 @@
 import ky from "ky";
+import { SemVer } from "semver";
 import { $ } from "zx";
-import { GithubAPI } from "./GithubAPI.service.mjs";
+import { config } from "./config.js";
+import { GithubAPI } from "./services/GithubAPI.service.mjs";
+import { PublishService } from "./services/Publish.service.mjs";
 
 const T10_MIN = 600_000 as const;
 const T1_MIN = 60_000 as const;
-// npm run publish-release 9.0.0 acceptance patch
 const [tag, env, releaseType] = process.argv.slice(2);
 const [owner, repo] = process.env.GITHUB_REPOSITORY!.split("/");
+const cfg = config(env);
 
 const ghAPI = new GithubAPI({
     http: ky.create(),
     token: process.env.GH_TOKEN!
 });
 
+const publishAPI = new PublishService({
+    http: ky.create(),
+    config: cfg
+});
+
+const isLatest = releaseType === "latest";
 const refSpec = `refs/tags/${tag}:refs/tags/${tag}`;
 await $`git fetch origin ${refSpec}`;
 const tagMessage = await $`git tag -l --format='%(contents)' ${tag}`.text();
@@ -24,16 +33,29 @@ const isStudioProMatched = tagMessage
     .trim()
     .endsWith(`(Studio Pro ${studioProVersion})`);
 
-console.log("tag:", tag);
-console.log("env:", env);
-console.log("releaseType:", releaseType);
-console.log("mxversion:", studioProVersion);
-console.log("isStudioProMatched:", isStudioProMatched);
-console.log("release:", await ghAPI.getByTag({ owner, repo, tag }));
+if (!isStudioProMatched) {
+    throw new Error("Unable to resolve Studio Pro version");
+}
 
-// Exit with error to test retry
-process.exit(0);
+const release = await ghAPI.getByTag({ owner, repo, tag });
+const asset = release.assets.find((asset) => asset.name.endsWith(".mpk"));
 
-async function sleep(n: number) {
-    return new Promise((resolve) => setTimeout(resolve, n));
+if (!asset) {
+    throw new Error("Unable to find app mpk");
+}
+
+try {
+    await publishAPI.publish(cfg.appNumber, {
+        version: new SemVer(tag),
+        studioProVersion,
+        githubArtifactURL: asset.browser_download_url
+    });
+} catch (error) {
+    console.error(error);
+    await coolDown(T1_MIN);
+    process.exit(1);
+}
+
+async function coolDown(duration: number) {
+    return new Promise((resolve) => setTimeout(resolve, duration));
 }

@@ -29,6 +29,12 @@ jobs:
             contents: write
         env:
             GH_TOKEN: ${{ github.token }}
+            CPAPI_HOST: ${{ secrets.CPAPI_HOST }}
+            CPAPI_HOST_PROD: ${{ secrets.CPAPI_HOST_PROD }}
+            CPAPI_PASS: ${{ secrets.CPAPI_PASS }}
+            CPAPI_PASS_PROD: ${{ secrets.CPAPI_PASS_PROD }}
+            CPAPI_USER: ${{ secrets.CPAPI_USER }}
+            CPAPI_USER_PROD: ${{ secrets.CPAPI_USER_PROD }}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4

@@ -10,7 +10,9 @@
     "description": "",
     "dependencies": {
         "@types/node": "^22.9.3",
+        "@types/semver": "^7.5.8",
         "ky": "^1.7.2",
+        "semver": "^7.6.3",
         "tsx": "^4.19.2",
         "typescript": "^5.7.2",
         "zx": "^8.2.2"
