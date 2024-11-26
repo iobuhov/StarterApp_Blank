@@ -52,6 +52,7 @@ try {
     });
 } catch (error) {
     console.error(error);
+    console.debug(process.env.CPAPI_HOST, process.env.CPAPI_HOST_PROD);
     await coolDown(T1_MIN);
     process.exit(1);
 }
