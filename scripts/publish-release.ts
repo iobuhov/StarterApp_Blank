@@ -12,11 +12,12 @@ const ghAPI = new GithubAPI({
     token: process.env.GH_TOKEN!
 });
 
+const refSpec = `refs/tags/${tag}:refs/tags/${tag}`;
+await $`git fetch origin ${refSpec}`;
 const tagMessage = await $`git tag -l --format='%(contents)' ${tag}`.text();
-
-let [studioProVersion] =
+const [spTag] =
     await $`git describe --tags --match='sp/*' --abbrev=0 ${tag}`.lines();
-studioProVersion = studioProVersion.replace("sp/", "");
+const studioProVersion = spTag.replace("sp/", "");
 
 const isStudioProMatched = tagMessage
     .trim()
