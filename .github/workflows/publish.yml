@@ -1,14 +1,26 @@
 name: Publish release
-run-name: Publish release ${{ inputs.release_tag }}
+run-name: Publish release ${{ inputs.tag }}
 
 on:
     repository_dispatch:
         types: [publish_release]
     workflow_dispatch:
         inputs:
-            release_tag:
+            tag:
                 description: "Release tag to publish"
                 required: true
+            env:
+                description: "Environment to publish to"
+                type: choice
+                options: ["production", "acceptance"]
+                required: true
+                default: "acceptance"
+            release_type:
+                description: "Release type"
+                type: choice
+                options: ["latest", "patch"]
+                required: true
+                default: "patch"
 
 jobs:
     publish:
@@ -18,13 +30,28 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: 22
-            - name: Publish
+            - name: Manual publish
+              if: github.event_name == 'workflow_dispatch'
               working-directory: scripts
               run: |
                   npm ci
                   npm install
-                  echo "Publishing release ${{ github.event.inputs.release_tag }}"
-                  npm run publish-release ${{ github.event.inputs.release_tag }}
+                  echo "Publishing release ${{ github.event.inputs.tag }}"
+                  npm run publish-release \
+                    ${{ inputs.tag }} \
+                    ${{ inputs.env}} \
+                    ${{ inputs.release_type }}
+            - name: Automated publish
+              if: github.event_name == 'repository_dispatch'
+              working-directory: scripts
+              run: |
+                  npm ci
+                  npm install
+                  echo "Publishing release ${{ github.event.client_payload.tag }}"
+                  npm run publish-release \
+                    ${{ github.event.client_payload.tag }} \
+                    ${{ github.event.client_payload.env}} \
+                    ${{ github.event.client_payload.release_type }}
 
     retry-on-failure:
         if: failure() && fromJSON(github.run_attempt) < 3

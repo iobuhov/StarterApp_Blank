@@ -10,6 +10,7 @@
     "description": "",
     "dependencies": {
         "@types/node": "^22.9.3",
+        "ky": "^1.7.2",
         "tsx": "^4.19.2",
         "typescript": "^5.7.2",
         "zx": "^8.2.2"

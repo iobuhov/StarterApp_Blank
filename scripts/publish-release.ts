@@ -1,22 +1,39 @@
+import ky from "ky";
 import { $ } from "zx";
+import { GithubAPI } from "./GithubAPI.service.mjs";
 
 const T10_MIN = 600_000 as const;
 const T1_MIN = 60_000 as const;
+// npm run publish-release 9.0.0 acceptance patch
+const [tag, env, releaseType] = process.argv.slice(2);
 
-const [tag] = process.argv.slice(2);
+const ghAPI = new GithubAPI({
+    http: ky.create(),
+    token: process.env.GH_TOKEN!
+});
+
 const tagMessage = await $`git tag -l --format='%(contents)' ${tag}`.text();
+
 let [studioProVersion] =
     await $`git describe --tags --match='sp/*' --abbrev=0 ${tag}`.lines();
 studioProVersion = studioProVersion.replace("sp/", "");
+
 const isStudioProMatched = tagMessage
     .trim()
     .endsWith(`(Studio Pro ${studioProVersion})`);
 
+console.log("tag:", tag);
+console.log("env:", env);
+console.log("releaseType:", releaseType);
 console.log("mxversion:", studioProVersion);
 console.log("isStudioProMatched:", isStudioProMatched);
+console.log(
+    "release:",
+    await ghAPI.getByTag({ owner: "mendix", repo: "StarterApp_Blank", tag })
+);
 
 // Exit with error to test retry
-process.exit(1);
+process.exit(0);
 
 async function sleep(n: number) {
     return new Promise((resolve) => setTimeout(resolve, n));
