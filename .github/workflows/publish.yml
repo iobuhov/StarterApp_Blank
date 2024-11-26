@@ -1,5 +1,5 @@
 name: Publish release
-run-name: Publish release ${{ inputs.tag }}
+run-name: Publish release ${{ inputs.tag || github.event.client_payload.tag }}
 
 on:
     repository_dispatch:
@@ -56,7 +56,7 @@ jobs:
                     ${{ github.event.client_payload.release_type }}
 
     retry-on-failure:
-        if: failure() && fromJSON(github.run_attempt) < 3
+        if: failure() && fromJSON(github.run_attempt) < 1
         needs: [publish]
         runs-on: ubuntu-latest
         steps:
