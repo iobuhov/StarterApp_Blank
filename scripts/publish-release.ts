@@ -6,6 +6,7 @@ const T10_MIN = 600_000 as const;
 const T1_MIN = 60_000 as const;
 // npm run publish-release 9.0.0 acceptance patch
 const [tag, env, releaseType] = process.argv.slice(2);
+const [owner, repo] = process.env.GITHUB_REPOSITORY!.split("/");
 
 const ghAPI = new GithubAPI({
     http: ky.create(),
@@ -28,10 +29,7 @@ console.log("env:", env);
 console.log("releaseType:", releaseType);
 console.log("mxversion:", studioProVersion);
 console.log("isStudioProMatched:", isStudioProMatched);
-console.log(
-    "release:",
-    await ghAPI.getByTag({ owner: "mendix", repo: "StarterApp_Blank", tag })
-);
+console.log("release:", await ghAPI.getByTag({ owner, repo, tag }));
 
 // Exit with error to test retry
 process.exit(0);
